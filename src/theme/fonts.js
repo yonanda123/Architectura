@@ -6,6 +6,7 @@ const fontType = {
   'Pjs-SemiBold': 'PlusJakartaSans-SemiBold',
   'Pjs-Bold': 'PlusJakartaSans-Bold',
   'Pjs-ExtraBold': 'PlusJakartaSans-ExtraBold',
-  'Mistrully' : 'Mistrully',
-};
+  'Mist' : 'Mistrully',
+  'QR' : 'Qwigley-Regular',
+}; 
 export default fontType;
