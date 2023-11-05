@@ -1,2 +1,3 @@
 import PriceList from './PriceList';
-export {PriceList};
+import Card from './Card';
+export {PriceList, Card};
