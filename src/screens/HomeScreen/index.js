@@ -236,7 +236,7 @@ const stylesCorousel = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily:fontType['Pjs-ExtraBold'],
     color: 'white',
     position: 'absolute',
     bottom: 16,

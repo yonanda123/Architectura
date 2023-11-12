@@ -79,6 +79,9 @@ export const houseData = [
     landArea: 1900,
     bathrooms: 4,
     bedrooms: 5,
+    rating: 4.8,
+    description:
+      'A beautiful classic Italian house with stunning architecture and spacious rooms.',
   },
   {
     id: '2',
@@ -91,6 +94,9 @@ export const houseData = [
     landArea: 800,
     bathrooms: 3,
     bedrooms: 4,
+    rating: 4.7,
+    description:
+      'A charming classic French house located in the heart of Provence, France.',
   },
   {
     id: '3',
@@ -103,6 +109,9 @@ export const houseData = [
     landArea: 900,
     bathrooms: 4,
     bedrooms: 5,
+    rating: 4.6,
+    description:
+      'An elegant classic house in the scenic Cotswolds of England with a large garden.',
   },
   {
     id: '4',
@@ -115,6 +124,9 @@ export const houseData = [
     landArea: 1200,
     bathrooms: 5,
     bedrooms: 6,
+    rating: 4.9,
+    description:
+      'A luxurious classic Greek house with breathtaking views of the Aegean Sea.',
   },
   {
     id: '5',
@@ -127,6 +139,9 @@ export const houseData = [
     landArea: 750,
     bathrooms: 3,
     bedrooms: 4,
+    rating: 4.5,
+    description:
+      'A stylish classic house in the vibrant city of Barcelona, Spain.',
   },
   {
     id: '6',
@@ -139,6 +154,9 @@ export const houseData = [
     landArea: 1100,
     bathrooms: 4,
     bedrooms: 5,
+    rating: 4.7,
+    description:
+      'An opulent classic house in the historic city of Vienna, Austria.',
   },
   {
     id: '7',
@@ -151,6 +169,9 @@ export const houseData = [
     landArea: 850,
     bathrooms: 3,
     bedrooms: 4,
+    rating: 4.6,
+    description:
+      'A traditional classic house in the serene city of Kyoto, Japan.',
   },
   {
     id: '8',
@@ -163,6 +184,9 @@ export const houseData = [
     landArea: 1400,
     bathrooms: 3,
     bedrooms: 4,
+    rating: 4.8,
+    description:
+      'A grand classic house in the historic city of Moscow, Russia.',
   },
   {
     id: '9',
@@ -175,6 +199,9 @@ export const houseData = [
     landArea: 900,
     bathrooms: 4,
     bedrooms: 5,
+    rating: 4.7,
+    description:
+      'A classic house in the bustling city of Beijing, China, with modern amenities.',
   },
   {
     id: '10',
@@ -187,6 +214,9 @@ export const houseData = [
     landArea: 800,
     bathrooms: 3,
     bedrooms: 4,
+    rating: 4.5,
+    description:
+      'A classic house with traditional Indian architecture in the historic city of Jaipur.',
   },
   {
     id: '11',
@@ -199,12 +229,14 @@ export const houseData = [
     landArea: 420,
     bathrooms: 3,
     bedrooms: 4,
+    rating: 4.2,
+    description:
+      'A modern contemporary house with sleek design and a spacious living area.',
   },
   {
     id: '21',
     title: 'Scandinavian House',
     image: require('./src/images/Concept7.jpg'),
-    rating: 4.6,
     price: '320 Juta',
     category: 'Contemporary',
     address: '101 Pine St, Suburb',
@@ -212,6 +244,9 @@ export const houseData = [
     landArea: 480,
     bathrooms: 2,
     bedrooms: 3,
+    rating: 4.6,
+    description:
+      'A modern Scandinavian-style house with a minimalistic design and comfortable living spaces.',
   },
 ];
 

@@ -1,3 +1,4 @@
 import PriceList from './PriceList';
 import Card from './Card';
-export {PriceList, Card};
+import DetailHouse from './DetailHouse';
+export {PriceList, Card, DetailHouse};

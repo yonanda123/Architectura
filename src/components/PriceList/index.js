@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import { fontType, colors } from '../../theme';
+import {fontType, colors} from '../../theme';
+import {useNavigation} from '@react-navigation/native';
+
 
 const getFontSizeForTitle = (title, containerWidth) => {
   const titleLength = title.length;
@@ -23,26 +25,30 @@ const getFontSizeForTitle = (title, containerWidth) => {
   }
 };
 
-const PriceList = ({ data }) => {
+const PriceList = ({data}) => {
+  const navigation = useNavigation();
+
   return (
     <>
       {data.map((house, index) => (
-        <HouseCard key={house.id} house={house} />
+        <HouseCard key={house.id} house={house} navigation={navigation} />
       ))}
     </>
   );
 };
-
-const HouseCard = ({ house }) => {
+const HouseCard = ({ house, navigation }) => {
+  const handleHousePress = () => {
+    navigation.navigate('DetailHouse', {house});
+  };
   return (
-    <TouchableOpacity style={stylesPriceList.houseCard} onPress={() => {}}>
+    <TouchableOpacity
+      style={stylesPriceList.houseCard}
+      onPress={handleHousePress}>
       <Image source={house.image} style={stylesPriceList.houseImage} />
       <View style={stylesPriceList.houseInfo}>
         <View style={stylesPriceList.houseTopInfo}>
           <Text style={stylesPriceList.categoryText}>{house.category}</Text>
-          <Text style={[stylesPriceList.priceText]}>
-            {`Rp ${house.price}`}
-          </Text>
+          <Text style={[stylesPriceList.priceText]}>{`Rp ${house.price}`}</Text>
         </View>
         <Text
           style={[
@@ -140,6 +146,11 @@ const stylesPriceList = StyleSheet.create({
     color: colors.grey(),
     fontSize: 12,
     fontFamily: fontType['Pjs-Medium'],
+  },
+  priceText:{
+    color: colors.grey(),
+    fontSize:12,
+    fontFamily: fontType['Pjs-bold'],
   },
   divider: {
     height: 1,

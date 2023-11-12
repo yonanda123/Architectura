@@ -1,5 +1,10 @@
 import * as React from 'react';
-import {ProfileScreen} from './src/screens';
+import { NavigationContainer } from '@react-navigation/native';
+import Router from './src/navigation/Router';
 export default function App() {
-  return <ProfileScreen />;
+  return (
+    <NavigationContainer>
+     <Router/>
+    </NavigationContainer>
+  );
 }
