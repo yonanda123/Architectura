@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Image,
   TextInput,
-  ScrollView,
   FlatList,
   TouchableOpacity,
+  Animated,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { fontType, colors } from '../../theme';
 import { houseData } from '../../../data';
 import { PriceList } from '../../components';
+
 const category = [
   { id: 1, label: 'Classic' },
   { id: 2, label: 'Contemporary' },
@@ -21,6 +23,7 @@ const category = [
   { id: 6, label: 'Tropical' },
   { id: 7, label: 'Mediterranean' },
 ];
+
 const ItemCategory = ({ item, activeCategory, setActiveCategory }) => {
   return (
     <TouchableOpacity
@@ -39,11 +42,12 @@ const ItemCategory = ({ item, activeCategory, setActiveCategory }) => {
     </TouchableOpacity>
   );
 };
+
 const FlatListCategory = ({ activeCategory, setActiveCategory }) => {
   return (
     <FlatList
       data={category}
-      keyExtractor={item => item.id.toString()}
+      keyExtractor={(item) => item.id.toString()}
       renderItem={({ item }) => (
         <ItemCategory
           item={item}
@@ -52,58 +56,128 @@ const FlatListCategory = ({ activeCategory, setActiveCategory }) => {
         />
       )}
       ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
-      contentContainerStyle={{ paddingHorizontal: 16 }}
       horizontal
       showsHorizontalScrollIndicator={false}
     />
   );
 };
+
 const HouseScreen = () => {
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const diffClampY = Animated.diffClamp(scrollY, 0, 150);
+  const recentY = diffClampY.interpolate({
+    inputRange: [0, 150],
+    outputRange: [0, -150],
+    extrapolate: 'clamp',
+  });
+
   const [activeCategory, setActiveCategory] = useState(1);
   const filteredData = activeCategory
     ? houseData.filter(
-        house => house.category === category[activeCategory - 1].label,
+        (house) => house.category === category[activeCategory - 1].label
       )
     : houseData;
+
   return (
     <View style={styles.container}>
-      <View style={styles.headerContainer}>
+      <View style={styles.header}>
         <Text style={styles.headerTitle}>Architectura</Text>
+        <TouchableWithoutFeedback>
+          <View style={styles.bar}>
+            <Image
+              source={require('../../icons/search.png')}
+              style={styles.searchIcon}
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search for projects or ideas"
+              placeholderTextColor="#999"
+            />
+          </View>
+        </TouchableWithoutFeedback>
       </View>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <Animated.View
+        style={[styles.headerContainer, { transform: [{ translateY: recentY }] }]}>
         <FlatListCategory
           activeCategory={activeCategory}
           setActiveCategory={setActiveCategory}
         />
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search for projects or ideas"
-            placeholderTextColor="#999"
-          />
-          <Image
-            source={require('../../icons/search.png')}
-            style={styles.searchIcon}
-          />
-        </View>
+      </Animated.View>
+      <Animated.ScrollView
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        contentContainerStyle={{ paddingTop: 142 }}>
         <View style={styles.housePriceListHeader}>
           <Text style={styles.housePriceListHeaderTitle}>House Price List</Text>
         </View>
         <View style={styles.cardPrizeList}>
           <PriceList data={filteredData} />
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 };
+
 export default HouseScreen;
 
 const styles = StyleSheet.create({
+  header: {
+    paddingHorizontal: 16,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    paddingTop: 16,
+    paddingBottom: 16,
+    position: 'absolute',
+    top: 0,
+    zIndex: 1000,
+    right: 0,
+    left: 0,
+    backgroundColor: '#f2f2f2',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontFamily: fontType['Mist'],
+  },
+  bar: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    backgroundColor: colors.grey(0.05),
+    borderRadius: 20,
+  },
+  searchIcon: {
+    width: 24,
+    height: 24,
+    tintColor: '#999',
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontFamily: fontType['Pjs-Medium'],
+    fontSize: 16,
+  },
+  headerContainer: {
+    position: 'absolute',
+    backgroundColor: '#f2f2f2',
+    zIndex: 999,
+    top: 118,
+    left: 0,
+    right: 0,
+    elevation: 1000,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
   housePriceListHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginHorizontal: 16,
+    paddingTop : 48,
   },
   housePriceListHeaderTitle: {
     fontSize: 20,
@@ -116,65 +190,9 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingLeft: 16,
-    paddingRight: 16,
-    paddingTop: 16,
-    backgroundColor: colors['white'],
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontFamily: fontType['Mist'],
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logo: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  notificationIcon: {
-    width: 30,
-    height: 30,
-  },
-  subheader: {
-    fontSize: 16,
-    color: '#555',
-    margin: 16,
-  },
-  scrollViewContent: {
-    flexGrow: 1,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    margin: 16,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  searchInput: {
-    flex: 1,
-    paddingLeft: 16,
-    fontFamily: fontType['Pjs-Medium'],
-    fontSize: 16,
-  },
-  searchIcon: {
-    width: 24,
-    height: 24,
-    margin: 8,
-    tintColor: '#999',
   },
 });
+
 const styleCategory = StyleSheet.create({
   button: {
     paddingHorizontal: 20,

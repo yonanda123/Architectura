@@ -9,8 +9,6 @@ import {
 } from 'react-native';
 import {fontType, colors} from '../../theme';
 import {useNavigation} from '@react-navigation/native';
-
-
 const getFontSizeForTitle = (title, containerWidth) => {
   const titleLength = title.length;
   if (titleLength <= 20) {
@@ -24,10 +22,8 @@ const getFontSizeForTitle = (title, containerWidth) => {
     return Math.min(maxFontSize, Math.max(minFontSize, fontSize));
   }
 };
-
 const PriceList = ({data}) => {
   const navigation = useNavigation();
-
   return (
     <>
       {data.map((house, index) => (
@@ -94,7 +90,6 @@ const HouseCard = ({ house, navigation }) => {
     </TouchableOpacity>
   );
 };
-
 export default PriceList;
 
 const stylesPriceList = StyleSheet.create({
