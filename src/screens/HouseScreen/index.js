@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, {useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -10,21 +10,20 @@ import {
   Animated,
   TouchableWithoutFeedback,
 } from 'react-native';
-import { fontType, colors } from '../../theme';
-import { houseData } from '../../../data';
-import { PriceList } from '../../components';
-
+import {fontType, colors} from '../../theme';
+import {houseData} from '../../../data';
+import {PriceList} from '../../components';
+import {useNavigation} from '@react-navigation/native';
 const category = [
-  { id: 1, label: 'Classic' },
-  { id: 2, label: 'Contemporary' },
-  { id: 3, label: 'Minimalist' },
-  { id: 4, label: 'Modern' },
-  { id: 5, label: 'Industrial' },
-  { id: 6, label: 'Tropical' },
-  { id: 7, label: 'Mediterranean' },
+  {id: 1, label: 'Classic'},
+  {id: 2, label: 'Contemporary'},
+  {id: 3, label: 'Minimalist'},
+  {id: 4, label: 'Modern'},
+  {id: 5, label: 'Industrial'},
+  {id: 6, label: 'Tropical'},
+  {id: 7, label: 'Mediterranean'},
 ];
-
-const ItemCategory = ({ item, activeCategory, setActiveCategory }) => {
+const ItemCategory = ({item, activeCategory, setActiveCategory}) => {
   return (
     <TouchableOpacity
       style={[
@@ -42,27 +41,29 @@ const ItemCategory = ({ item, activeCategory, setActiveCategory }) => {
     </TouchableOpacity>
   );
 };
-
-const FlatListCategory = ({ activeCategory, setActiveCategory }) => {
+const FlatListCategory = ({activeCategory, setActiveCategory}) => {
   return (
     <FlatList
       data={category}
-      keyExtractor={(item) => item.id.toString()}
-      renderItem={({ item }) => (
+      keyExtractor={item => item.id.toString()}
+      renderItem={({item}) => (
         <ItemCategory
           item={item}
           activeCategory={activeCategory}
           setActiveCategory={setActiveCategory}
         />
       )}
-      ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
+      ItemSeparatorComponent={() => <View style={{width: 10}} />}
       horizontal
       showsHorizontalScrollIndicator={false}
     />
   );
 };
-
 const HouseScreen = () => {
+  const navigation = useNavigation();
+  const handleNavigateToAddForm = () => {
+    navigation.navigate('AddFormHouse');
+  };
   const scrollY = useRef(new Animated.Value(0)).current;
   const diffClampY = Animated.diffClamp(scrollY, 0, 150);
   const recentY = diffClampY.interpolate({
@@ -70,14 +71,12 @@ const HouseScreen = () => {
     outputRange: [0, -150],
     extrapolate: 'clamp',
   });
-
   const [activeCategory, setActiveCategory] = useState(1);
   const filteredData = activeCategory
     ? houseData.filter(
-        (house) => house.category === category[activeCategory - 1].label
+        house => house.category === category[activeCategory - 1].label,
       )
     : houseData;
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -97,7 +96,7 @@ const HouseScreen = () => {
         </TouchableWithoutFeedback>
       </View>
       <Animated.View
-        style={[styles.headerContainer, { transform: [{ translateY: recentY }] }]}>
+        style={[styles.headerContainer, {transform: [{translateY: recentY}]}]}>
         <FlatListCategory
           activeCategory={activeCategory}
           setActiveCategory={setActiveCategory}
@@ -106,10 +105,10 @@ const HouseScreen = () => {
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true }
+          [{nativeEvent: {contentOffset: {y: scrollY}}}],
+          {useNativeDriver: true},
         )}
-        contentContainerStyle={{ paddingTop: 142 }}>
+        contentContainerStyle={{paddingTop: 142}}>
         <View style={styles.housePriceListHeader}>
           <Text style={styles.housePriceListHeaderTitle}>House Price List</Text>
         </View>
@@ -117,13 +116,37 @@ const HouseScreen = () => {
           <PriceList data={filteredData} />
         </View>
       </Animated.ScrollView>
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={handleNavigateToAddForm}>
+        <Image
+          source={require('../../icons/plus.png')}
+          style={styles.floatingButtonImage}
+        />
+      </TouchableOpacity>
     </View>
   );
 };
-
 export default HouseScreen;
 
 const styles = StyleSheet.create({
+  floatingButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#0072ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+  },
+  floatingButtonImage: {
+    width: 20,
+    height: 20,
+    tintColor: 'white',
+  },
   header: {
     paddingHorizontal: 16,
     flexDirection: 'column',
@@ -177,7 +200,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginHorizontal: 16,
-    paddingTop : 48,
+    paddingTop: 48,
   },
   housePriceListHeaderTitle: {
     fontSize: 20,
