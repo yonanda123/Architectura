@@ -1,4 +1,4 @@
-import React,  { useState } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -7,13 +7,17 @@ import {
   ScrollView,
   StyleSheet,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {fontType, colors} from '../../theme';
+import FastImage from 'react-native-fast-image';
+import axios from 'axios';
+import {FloatingAction} from 'react-native-floating-action';
 const getFontSizeForTitle = (title, containerWidth) => {
   const titleLength = title.length;
-  if (titleLength <= 20) {
-    return 20;
+  if (titleLength <= 12) {
+    return 16;
   } else {
     const maxFontSize = 16;
     const minFontSize = 16;
@@ -24,7 +28,7 @@ const getFontSizeForTitle = (title, containerWidth) => {
   }
 };
 const HouseDetail = ({route}) => {
-  const {house} = route.params;
+  const {houseId} = route.params;
   const navigation = useNavigation();
   const [isLoveActive, setIsLoveActive] = useState(false);
   const handleBackButton = () => {
@@ -33,9 +37,66 @@ const HouseDetail = ({route}) => {
   const handleLoveButton = () => {
     setIsLoveActive(!isLoveActive);
   };
+  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getPropertyById();
+  }, [houseId]);
+
+  const getPropertyById = async () => {
+    try {
+      const response = await axios.get(
+        `https://65745078f941bda3f2af93c5.mockapi.io/architectura/Property/${houseId}`,
+      );
+      setSelectedProperty(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const handleDelete = async () => {
+    await axios
+      .delete(
+        `https://65745078f941bda3f2af93c5.mockapi.io/architectura/Property/${houseId}`,
+      )
+      .then(() => {
+        navigation.navigate('HouseScreen');
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  };
+  const actions = [
+    {
+      text: 'Delete Data',
+      icon: require('../../icons/trash-can.png'),
+      name: 'delete_data',
+    },
+    {
+      text: 'Update Data',
+      icon: require('../../icons/edit-button.png'),
+      name: 'update_data',
+    },
+  ];
+  const handleFabPress = name => {
+    if (name === 'delete_data') {
+      handleDelete();
+    } else if (name === 'update_data') {
+      navigation.navigate('EditFormHouse', {houseId});
+    }
+  };
   return (
     <View style={styles.container}>
-      <Image source={house.image} style={styles.houseImage} />
+      <FastImage
+        style={styles.houseImage}
+        source={{
+          uri: selectedProperty?.image,
+          headers: {Authorization: 'someAuthToken'},
+          priority: FastImage.priority.high,
+        }}
+        resizeMode={FastImage.resizeMode.cover}
+      />
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackButton} style={styles.backButton}>
           <Image
@@ -55,105 +116,125 @@ const HouseDetail = ({route}) => {
         </TouchableOpacity>
       </View>
       <View style={styles.containerOverlay}>
-        <ScrollView contentContainerStyle={styles.scrollViewContent}>
-          <View style={styles.category}>
-            <TouchableOpacity style={styles.categoryButton}>
-              <Text style={styles.categoryButtonText}>{house.category}</Text>
-            </TouchableOpacity>
-            <View style={styles.ratingContainer}>
-              <Image
-                source={require('../../icons/star.png')}
-                style={styles.ratingIcon}
-              />
-              <Text style={styles.ratingText}>{house.rating}</Text>
+        {loading ? (
+          <View
+            style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
+            <ActivityIndicator size={'large'} color={colors.blue()} />
+          </View>
+        ) : (
+          <ScrollView contentContainerStyle={styles.scrollViewContent}>
+            <View style={styles.category}>
+              <TouchableOpacity style={styles.categoryButton}>
+                <Text
+                  style={[
+                    styles.categoryButtonText,
+                    {
+                      fontSize: getFontSizeForTitle(
+                        selectedProperty.category?.name,
+                        Dimensions.get('window').width,
+                      ),
+                    },
+                  ]}>
+                  {selectedProperty.category?.name}
+                </Text>
+              </TouchableOpacity>
+              <View style={styles.ratingContainer}>
+                <Image
+                  source={require('../../icons/star.png')}
+                  style={styles.ratingIcon}
+                />
+                <Text style={styles.ratingText}>{selectedProperty.rating}</Text>
+              </View>
             </View>
-          </View>
-          <View style={styles.containerRowPrice}>
-            <Text
-              style={[
-                styles.houseTitle,
-                {
-                  fontSize: getFontSizeForTitle(
-                    house.title,
-                    Dimensions.get('window').width,
-                  ),
-                },
-              ]}>
-              {house.title}
-            </Text>
-            <View style={styles.priceContainer}>
-              <Image
-                source={require('../../icons/money.png')}
-                style={styles.priceIcon}
-              />
-              <Text style={styles.priceText}>{`Rp ${house.price}`}</Text>
-            </View>
-          </View>
-          <View style={styles.addressContainer}>
-            <Image
-              source={require('../../icons/location.png')}
-              style={styles.locationIcon}
-            />
-            <Text style={styles.addressText}>{house.address}</Text>
-          </View>
-          <View style={styles.propertyDetails}>
-            <View style={styles.LBContainer}>
-              <Image
-                source={require('../../icons/BuildingArea.png')}
-                style={styles.BuildingAreaIcon}
-              />
+            <View style={styles.containerRowPrice}>
               <Text
-                style={
-                  styles.detailText
-                }>{`LB ${house.buildingArea} m²   `}</Text>
+                style={[
+                  styles.houseTitle,
+                  {
+                    fontSize: getFontSizeForTitle(
+                      selectedProperty.title,
+                      Dimensions.get('window').width,
+                    ),
+                  },
+                ]}>
+                {selectedProperty.title}
+              </Text>
+              <View style={styles.priceContainer}>
+                <Image
+                  source={require('../../icons/money.png')}
+                  style={styles.priceIcon}
+                />
+                <Text
+                  style={
+                    styles.priceText
+                  }>{`Rp ${selectedProperty.price} ${selectedProperty.nominal}`}</Text>
+              </View>
             </View>
-            <View style={styles.LTContainer}>
+            <View style={styles.addressContainer}>
               <Image
-                source={require('../../icons/SurfaceArea.png')}
-                style={styles.BuildingAreaIcon}
+                source={require('../../icons/location.png')}
+                style={styles.locationIcon}
               />
-              <Text style={styles.detailText}>{`LT ${house.landArea} m²`}</Text>
+              <Text style={styles.addressText}>{selectedProperty.address}</Text>
             </View>
-          </View>
-          <Text style={styles.RoomText}>Room</Text>
-          <View style={styles.featuresContainer}>
-            <View style={styles.featureIcon}>
-              <Image
-                source={require('../../icons/bathroom.png')}
-                style={styles.iconImage}
-              />
-              <Text style={styles.iconText}>{`${house.bathrooms} Baths`}</Text>
+            <View style={styles.propertyDetails}>
+              <View style={styles.LBContainer}>
+                <Image
+                  source={require('../../icons/BuildingArea.png')}
+                  style={styles.BuildingAreaIcon}
+                />
+                <Text
+                  style={
+                    styles.detailText
+                  }>{`LB ${selectedProperty.buildingArea} m²   `}</Text>
+              </View>
+              <View style={styles.LTContainer}>
+                <Image
+                  source={require('../../icons/SurfaceArea.png')}
+                  style={styles.BuildingAreaIcon}
+                />
+                <Text
+                  style={
+                    styles.detailText
+                  }>{`LT ${selectedProperty.landArea} m²`}</Text>
+              </View>
             </View>
-            <View style={styles.featureIcon}>
-              <Image
-                source={require('../../icons/bedroom.png')}
-                style={styles.iconImage}
-              />
-              <Text style={styles.iconText}>{`${house.bedrooms} Rooms`}</Text>
+            <Text style={styles.RoomText}>Room</Text>
+            <View style={styles.featuresContainer}>
+              <View style={styles.featureIcon}>
+                <Image
+                  source={require('../../icons/bathroom.png')}
+                  style={styles.iconImage}
+                />
+                <Text
+                  style={
+                    styles.iconText
+                  }>{`${selectedProperty.bathrooms} Baths`}</Text>
+              </View>
+              <View style={styles.featureIcon}>
+                <Image
+                  source={require('../../icons/bedroom.png')}
+                  style={styles.iconImage}
+                />
+                <Text
+                  style={
+                    styles.iconText
+                  }>{`${selectedProperty.bedrooms} Rooms`}</Text>
+              </View>
             </View>
-          </View>
-          <Text style={styles.RoomText}>Description</Text>
-          <Text style={styles.descriptionText}>{house.description}</Text>
-        </ScrollView>
+            <Text style={styles.RoomText}>Description</Text>
+            <Text style={styles.descriptionText}>
+              {selectedProperty.description}
+            </Text>
+          </ScrollView>
+        )}
       </View>
-      <View style={styles.bottomNavigation}>
-      <TouchableOpacity style={styles.messageButton}>
-          <Image
-            source={require('../../icons/chat99.png')}
-            style={styles.iconImage}
-          />
-        </TouchableOpacity>
-        <View style={styles.verticalDivider} />
-        <TouchableOpacity style={styles.cartButton}>
-          <Image
-            source={require('../../icons/add-cart99.png')}
-            style={styles.iconImage}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.buyNowButton}>
-          <Text style={styles.buyNowText}>Buy Now</Text>
-        </TouchableOpacity>
-      </View>
+      <FloatingAction
+        actions={actions}
+        onPressItem={name => handleFabPress(name)}
+        showBackground={false}
+        overlayColor="#007AFF"
+      />
     </View>
   );
 };
@@ -215,7 +296,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 6,
     alignItems: 'center',
-    width: 100,
+    width: 140,
   },
   categoryButtonText: {
     color: 'white',

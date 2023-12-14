@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -14,10 +14,11 @@ import {useNavigation} from '@react-navigation/native';
 import {Picker} from '@react-native-picker/picker';
 import axios from 'axios';
 
-const AddFormHouse = () => {
+const EditFormHouse = ({route}) => {
   const [choosenLabel, setChoosenLabel] = useState('Juta');
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
+  const {houseId} = route.params;
   const prizeOptions = ['Juta', 'Miliar'];
   const dataCategory = [
     {id: 1, name: 'Classic'},
@@ -27,6 +28,9 @@ const AddFormHouse = () => {
     {id: 5, name: 'Industrial'},
     {id: 7, name: 'Mediterranean'},
   ];
+  useEffect(() => {
+    getBlogById();
+  }, [houseId]);
   const [propertyData, setPropertyData] = useState({
     title: '',
     price: '',
@@ -49,16 +53,42 @@ const AddFormHouse = () => {
     const newRating = Math.min(5, Math.max(1, propertyData.rating + increment));
     setPropertyData({
       ...propertyData,
-      rating: newRating,
+      rating: parseFloat(newRating.toFixed(1)),
     });
   };
-
-  const handleAddProperty = async () => {
+  const getBlogById = async () => {
+    try {
+      const response = await axios.get(
+        `https://65745078f941bda3f2af93c5.mockapi.io/architectura/Property/${houseId}`,
+      );
+      setPropertyData({
+        title: response.data.title,
+        price: response.data.price,
+        category: {
+          id: response.data.category.id,
+          name: response.data.category.name,
+        },
+        address: response.data.address,
+        buildingArea: response.data.buildingArea,
+        landArea: response.data.landArea,
+        bathrooms: response.data.bathrooms,
+        bedrooms: response.data.bedrooms,
+        rating: response.data.rating,
+        description: response.data.description,
+      });
+      setChoosenLabel(response.data.nominal);
+      setImage(response.data.image);
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const handleUpdateProperty = async () => {
     setLoading(true);
     try {
       await axios
-        .post(
-          'https://65745078f941bda3f2af93c5.mockapi.io/architectura/Property',
+        .put(
+          `https://65745078f941bda3f2af93c5.mockapi.io/architectura/Property/${houseId}`,
           {
             title: propertyData.title,
             image,
@@ -71,7 +101,6 @@ const AddFormHouse = () => {
             bedrooms: propertyData.bedrooms,
             description: propertyData.description,
             rating: propertyData.rating,
-            createdAt: new Date(),
             nominal: choosenLabel,
           },
         )
@@ -100,7 +129,7 @@ const AddFormHouse = () => {
           />
         </TouchableOpacity>
         <View style={{flex: 1, alignItems: 'center'}}>
-          <Text style={styles.headerTitle}>Add Property</Text>
+          <Text style={styles.headerTitle}>Edit Property</Text>
         </View>
       </View>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -171,6 +200,7 @@ const AddFormHouse = () => {
             value={propertyData.address}
             onChangeText={text => handleChange('address', text)}
             multiline
+            numberOfLines={3}
           />
           <Text style={styles.caption}>Building Area (m²)</Text>
           <View style={styles.inputContainer}>
@@ -224,9 +254,7 @@ const AddFormHouse = () => {
                 style={styles.ratingImage}
               />
             </TouchableOpacity>
-            <Text style={styles.ratingText}>
-              {propertyData.rating.toFixed(1)}
-            </Text>
+            <Text style={styles.ratingText}>{propertyData.rating}</Text>
             <TouchableOpacity
               style={styles.ratingButton}
               onPress={() => handleRatingChange(0.1)}>
@@ -241,12 +269,13 @@ const AddFormHouse = () => {
             style={[styles.input, styles.multilineInput]}
             placeholder="Description"
             multiline
+            numberOfLines={5}
             value={propertyData.description}
             onChangeText={text => handleChange('description', text)}
           />
           <TouchableOpacity
             style={styles.addButton}
-            onPress={handleAddProperty}>
+            onPress={handleUpdateProperty}>
             <Text style={styles.buttonText}>Add Property</Text>
           </TouchableOpacity>
         </View>
@@ -259,7 +288,7 @@ const AddFormHouse = () => {
     </View>
   );
 };
-export default AddFormHouse;
+export default EditFormHouse;
 
 const category = StyleSheet.create({
   loadingOverlay: {

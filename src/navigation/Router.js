@@ -8,6 +8,7 @@ import {
   ProfileScreen,
   RoomScreen,
   AddFormHouse,
+  EditFormHouse,
 } from '../screens';
 import {Image} from 'react-native';
 import {fontType, colors} from '../theme';
@@ -128,6 +129,19 @@ const Router = () => {
       <Stack.Screen
         name="AddFormHouse"
         component={AddFormHouse}
+        options={{
+          title: 'Detail House',
+          headerShown: false,
+          animationEnabled: true,
+          animationTypeForReplace: 'pop',
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+          ...TransitionPresets.SlideFromRightIOS,
+        }}
+      />
+      <Stack.Screen
+        name="EditFormHouse"
+        component={EditFormHouse}
         options={{
           title: 'Detail House',
           headerShown: false,

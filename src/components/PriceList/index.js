@@ -5,69 +5,48 @@ import {
   Text,
   Image,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
-import {fontType, colors} from '../../theme';
+import FastImage from 'react-native-fast-image';
 import {useNavigation} from '@react-navigation/native';
-const getFontSizeForTitle = (title, containerWidth) => {
-  const titleLength = title.length;
-  if (titleLength <= 20) {
-    return 13.4;
-  } else {
-    const maxFontSize = 12.2;
-    const minFontSize = 10;
-    const maxWidth = containerWidth * 0.9;
-    const desiredWidth = maxWidth * 0.9;
-    const fontSize = (desiredWidth / titleLength) * 1.5;
-    return Math.min(maxFontSize, Math.max(minFontSize, fontSize));
-  }
-};
-const PriceList = ({data}) => {
+import {fontType, colors} from '../../theme';
+
+const ItemSmall = ({item}) => {
   const navigation = useNavigation();
-  return (
-    <>
-      {data.map((house, index) => (
-        <HouseCard key={house.id} house={house} navigation={navigation} />
-      ))}
-    </>
-  );
-};
-const HouseCard = ({ house, navigation }) => {
-  const handleHousePress = () => {
-    navigation.navigate('DetailHouse', {house});
-  };
+  console.log(item);
   return (
     <TouchableOpacity
       style={stylesPriceList.houseCard}
-      onPress={handleHousePress}>
-      <Image source={house.image} style={stylesPriceList.houseImage} />
+      onPress={() => navigation.navigate('DetailHouse', {houseId: item.id})}>
+      <FastImage
+        style={stylesPriceList.houseImage}
+        source={{
+          uri: item?.image,
+          headers: {Authorization: 'someAuthToken'},
+          priority: FastImage.priority.high,
+        }}
+        resizeMode={FastImage.resizeMode.cover}
+      />
       <View style={stylesPriceList.houseInfo}>
         <View style={stylesPriceList.houseTopInfo}>
-          <Text style={stylesPriceList.categoryText}>{house.category}</Text>
-          <Text style={[stylesPriceList.priceText]}>{`Rp ${house.price}`}</Text>
+          <Text style={stylesPriceList.categoryText}>
+            {item?.category.name}
+          </Text>
+          <Text
+            style={[
+              stylesPriceList.priceText,
+            ]}>{`Rp ${item?.price} ${item?.nominal}`}</Text>
         </View>
-        <Text
-          style={[
-            stylesPriceList.houseTitle,
-            {
-              fontSize: getFontSizeForTitle(
-                house.title,
-                Dimensions.get('window').width,
-              ),
-            },
-          ]}>
-          {house.title}
-        </Text>
-        <Text style={stylesPriceList.addressText}>{house.address}</Text>
+        <Text style={stylesPriceList.houseTitle}>{item?.title}</Text>
+        <Text style={stylesPriceList.addressText}>{item?.address}</Text>
         <View style={stylesPriceList.propertyDetails}>
           <Text
             style={
               stylesPriceList.detailText
-            }>{`LB ${house.buildingArea} m²   `}</Text>
+            }>{`LB ${item?.buildingArea} m²   `}</Text>
           <Text
             style={
               stylesPriceList.detailText
-            }>{`LT ${house.landArea} m²`}</Text>
+            }>{`LT ${item?.landArea} m²`}</Text>
         </View>
         <View style={stylesPriceList.divider} />
         <View style={stylesPriceList.featuresContainer}>
@@ -76,21 +55,22 @@ const HouseCard = ({ house, navigation }) => {
               source={require('../../icons/bathroom.png')}
               style={stylesPriceList.iconImage}
             />
-            <Text style={stylesPriceList.iconText}>{`${house.bathrooms}`}</Text>
+            <Text style={stylesPriceList.iconText}>{`${item?.bathrooms}`}</Text>
           </View>
           <View style={stylesPriceList.featureIcon}>
             <Image
               source={require('../../icons/bedroom.png')}
               style={stylesPriceList.iconImage}
             />
-            <Text style={stylesPriceList.iconText}>{`${house.bedrooms}`}</Text>
+            <Text style={stylesPriceList.iconText}>{`${item?.bedrooms}`}</Text>
           </View>
         </View>
       </View>
     </TouchableOpacity>
   );
 };
-export default PriceList;
+
+export default ItemSmall;
 
 const stylesPriceList = StyleSheet.create({
   houseCard: {
@@ -142,9 +122,9 @@ const stylesPriceList = StyleSheet.create({
     fontSize: 12,
     fontFamily: fontType['Pjs-Medium'],
   },
-  priceText:{
+  priceText: {
     color: colors.grey(),
-    fontSize:12,
+    fontSize: 12,
     fontFamily: fontType['Pjs-bold'],
   },
   divider: {

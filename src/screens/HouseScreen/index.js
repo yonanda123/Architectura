@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useCallback, useEffect} from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,14 @@ import {
   TouchableOpacity,
   Animated,
   TouchableWithoutFeedback,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import {fontType, colors} from '../../theme';
-import {houseData} from '../../../data';
 import {PriceList} from '../../components';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
+import axios from 'axios';
+
 const category = [
   {id: 1, label: 'Classic'},
   {id: 2, label: 'Contemporary'},
@@ -23,6 +26,7 @@ const category = [
   {id: 6, label: 'Tropical'},
   {id: 7, label: 'Mediterranean'},
 ];
+
 const ItemCategory = ({item, activeCategory, setActiveCategory}) => {
   return (
     <TouchableOpacity
@@ -41,6 +45,7 @@ const ItemCategory = ({item, activeCategory, setActiveCategory}) => {
     </TouchableOpacity>
   );
 };
+
 const FlatListCategory = ({activeCategory, setActiveCategory}) => {
   return (
     <FlatList
@@ -59,11 +64,51 @@ const FlatListCategory = ({activeCategory, setActiveCategory}) => {
     />
   );
 };
+
 const HouseScreen = () => {
   const navigation = useNavigation();
-  const handleNavigateToAddForm = () => {
-    navigation.navigate('AddFormHouse');
+  const [loading, setLoading] = useState(true);
+  const [propertyData, setPropertyData] = useState([]);
+  const [categoryData, setCategoryData] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  useEffect(() => {
+    getDataBlog();
+  }, []);
+  const getDataBlog = async () => {
+    try {
+      const response = await axios.get(
+        'https://65745078f941bda3f2af93c5.mockapi.io/architectura/Property',
+      );
+      const uniqueCategories = Array.from(
+        new Set(response.data.map(item => item.category)),
+      );
+      setCategoryData(
+        uniqueCategories.map((label, index) => ({ id: index + 1, label })),
+      );
+      setPropertyData(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
+  useEffect(() => {
+    setActiveCategory(1);
+  }, [categoryData]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      getDataBlog();
+      setRefreshing(false);
+    }, 1500);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      getDataBlog();
+    }, []),
+  );
+
   const scrollY = useRef(new Animated.Value(0)).current;
   const diffClampY = Animated.diffClamp(scrollY, 0, 150);
   const recentY = diffClampY.interpolate({
@@ -71,12 +116,17 @@ const HouseScreen = () => {
     outputRange: [0, -150],
     extrapolate: 'clamp',
   });
+
   const [activeCategory, setActiveCategory] = useState(1);
+
   const filteredData = activeCategory
-    ? houseData.filter(
-        house => house.category === category[activeCategory - 1].label,
-      )
-    : houseData;
+  ? propertyData.filter(
+      house =>
+        house.category ===
+        categoryData.find(cat => cat.id === activeCategory)?.label,
+    )
+  : propertyData;
+  console.log(propertyData);
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -108,44 +158,56 @@ const HouseScreen = () => {
           [{nativeEvent: {contentOffset: {y: scrollY}}}],
           {useNativeDriver: true},
         )}
-        contentContainerStyle={{paddingTop: 142}}>
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          gap: 10,
+          paddingVertical: 20,
+          paddingTop: 142,
+        }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }>
         <View style={styles.housePriceListHeader}>
           <Text style={styles.housePriceListHeaderTitle}>House Price List</Text>
         </View>
-        <View style={styles.cardPrizeList}>
-          <PriceList data={filteredData} />
-        </View>
+        {loading ? (
+          <ActivityIndicator size={'large'} color={colors.blue()} />
+        ) : (
+          filteredData.map((item, index) => (
+            <PriceList item={item} key={index} />
+          ))
+        )}
       </Animated.ScrollView>
       <TouchableOpacity
         style={styles.floatingButton}
-        onPress={handleNavigateToAddForm}>
+        onPress={() => navigation.navigate('AddFormHouse')}>
         <Image
-          source={require('../../icons/plus.png')}
-          style={styles.floatingButtonImage}
+          source={require('../../icons/pencil.png')}
+          style={styles.searchIcon}
         />
       </TouchableOpacity>
     </View>
   );
 };
+
 export default HouseScreen;
 
 const styles = StyleSheet.create({
   floatingButton: {
+    backgroundColor: colors.blue(),
+    padding: 15,
     position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#0072ff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 5,
-  },
-  floatingButtonImage: {
-    width: 20,
-    height: 20,
-    tintColor: 'white',
+    bottom: 24,
+    right: 24,
+    borderRadius: 10,
+    shadowColor: colors.blue(),
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
   },
   header: {
     paddingHorizontal: 16,
@@ -174,7 +236,6 @@ const styles = StyleSheet.create({
   searchIcon: {
     width: 24,
     height: 24,
-    tintColor: '#999',
   },
   searchInput: {
     flex: 1,
@@ -199,17 +260,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginHorizontal: 16,
     paddingTop: 48,
   },
   housePriceListHeaderTitle: {
     fontSize: 20,
-    marginLeft: 3,
     fontFamily: fontType['Pjs-Bold'],
     color: colors['black'],
-  },
-  cardPrizeList: {
-    padding: 16,
   },
   container: {
     flex: 1,
