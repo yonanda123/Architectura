@@ -14,9 +14,8 @@ import {
 } from 'react-native';
 import {fontType, colors} from '../../theme';
 import {PriceList} from '../../components';
-import {useNavigation, useFocusEffect} from '@react-navigation/native';
-import axios from 'axios';
-
+import {useNavigation} from '@react-navigation/native';
+import firestore from '@react-native-firebase/firestore';
 const category = [
   {id: 1, label: 'Classic'},
   {id: 2, label: 'Contemporary'},
@@ -26,7 +25,6 @@ const category = [
   {id: 6, label: 'Tropical'},
   {id: 7, label: 'Mediterranean'},
 ];
-
 const ItemCategory = ({item, activeCategory, setActiveCategory}) => {
   return (
     <TouchableOpacity
@@ -45,7 +43,6 @@ const ItemCategory = ({item, activeCategory, setActiveCategory}) => {
     </TouchableOpacity>
   );
 };
-
 const FlatListCategory = ({activeCategory, setActiveCategory}) => {
   return (
     <FlatList
@@ -64,7 +61,6 @@ const FlatListCategory = ({activeCategory, setActiveCategory}) => {
     />
   );
 };
-
 const HouseScreen = () => {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
@@ -72,43 +68,46 @@ const HouseScreen = () => {
   const [categoryData, setCategoryData] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   useEffect(() => {
-    getDataBlog();
+    const subscriber = firestore()
+      .collection('property')
+      .onSnapshot(querySnapshot => {
+        const property = [];
+        const categories = [];
+        querySnapshot.forEach(documentSnapshot => {
+          const data = documentSnapshot.data();
+          property.push({
+            ...data,
+            id: documentSnapshot.id,
+          });
+          categories.push({
+            id: documentSnapshot.id,
+            label: {id: data.category.id, name: data.category.name},
+          });
+        });
+        setPropertyData(property);
+        setCategoryData(categories);
+        setLoading(false);
+      });
+    return () => subscriber();
   }, []);
-  const getDataBlog = async () => {
-    try {
-      const response = await axios.get(
-        'https://65745078f941bda3f2af93c5.mockapi.io/architectura/Property',
-      );
-      const uniqueCategories = Array.from(
-        new Set(response.data.map(item => item.category)),
-      );
-      setCategoryData(
-        uniqueCategories.map((label, index) => ({ id: index + 1, label })),
-      );
-      setPropertyData(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  useEffect(() => {
-    setActiveCategory(1);
-  }, [categoryData]);
-
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
-      getDataBlog();
-      setRefreshing(false);
+      firestore()
+        .collection('property')
+        .onSnapshot(querySnapshot => {
+          const properties = [];
+          querySnapshot.forEach(documentSnapshot => {
+            properties.push({
+              ...documentSnapshot.data(),
+              id: documentSnapshot.id,
+            });
+          });
+          setPropertyData(properties);
+          setRefreshing(false);
+        });
     }, 1500);
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      getDataBlog();
-    }, []),
-  );
-
   const scrollY = useRef(new Animated.Value(0)).current;
   const diffClampY = Animated.diffClamp(scrollY, 0, 150);
   const recentY = diffClampY.interpolate({
@@ -116,17 +115,18 @@ const HouseScreen = () => {
     outputRange: [0, -150],
     extrapolate: 'clamp',
   });
-
   const [activeCategory, setActiveCategory] = useState(1);
-
   const filteredData = activeCategory
-  ? propertyData.filter(
-      house =>
-        house.category ===
-        categoryData.find(cat => cat.id === activeCategory)?.label,
-    )
-  : propertyData;
+    ? propertyData.filter(
+        house =>
+          house.category.id === activeCategory &&
+          category.find(cat => cat.id === activeCategory)?.label ===
+            house.category.name,
+      )
+    : propertyData;
+  console.log(categoryData);
   console.log(propertyData);
+  console.log(filteredData);
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -189,7 +189,6 @@ const HouseScreen = () => {
     </View>
   );
 };
-
 export default HouseScreen;
 
 const styles = StyleSheet.create({

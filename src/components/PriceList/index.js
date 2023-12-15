@@ -9,7 +9,6 @@ import {
 import FastImage from 'react-native-fast-image';
 import {useNavigation} from '@react-navigation/native';
 import {fontType, colors} from '../../theme';
-
 const ItemSmall = ({item}) => {
   const navigation = useNavigation();
   console.log(item);
@@ -69,7 +68,6 @@ const ItemSmall = ({item}) => {
     </TouchableOpacity>
   );
 };
-
 export default ItemSmall;
 
 const stylesPriceList = StyleSheet.create({

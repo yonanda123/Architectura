@@ -6,27 +6,14 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Dimensions,
   ActivityIndicator,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {fontType, colors} from '../../theme';
 import FastImage from 'react-native-fast-image';
-import axios from 'axios';
+import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
 import {FloatingAction} from 'react-native-floating-action';
-const getFontSizeForTitle = (title, containerWidth) => {
-  const titleLength = title.length;
-  if (titleLength <= 12) {
-    return 16;
-  } else {
-    const maxFontSize = 16;
-    const minFontSize = 16;
-    const maxWidth = containerWidth * 0.9;
-    const desiredWidth = maxWidth * 0.9;
-    const fontSize = (desiredWidth / titleLength) * 1.5;
-    return Math.min(maxFontSize, Math.max(minFontSize, fontSize));
-  }
-};
 const HouseDetail = ({route}) => {
   const {houseId} = route.params;
   const navigation = useNavigation();
@@ -39,33 +26,43 @@ const HouseDetail = ({route}) => {
   };
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
-    getPropertyById();
+    const subscriber = firestore()
+      .collection('property')
+      .doc(houseId)
+      .onSnapshot(documentSnapshot => {
+        const propertyData = documentSnapshot.data();
+        if (propertyData) {
+          console.log('Property data: ', propertyData);
+          setSelectedProperty(propertyData);
+        } else {
+          console.log(`Property with ID ${houseId} not found.`);
+        }
+      });
+    setLoading(false);
+    return () => subscriber();
   }, [houseId]);
-
-  const getPropertyById = async () => {
+  const handleDelete = async () => {
+    setLoading(true);
     try {
-      const response = await axios.get(
-        `https://65745078f941bda3f2af93c5.mockapi.io/architectura/Property/${houseId}`,
-      );
-      setSelectedProperty(response.data);
+      await firestore()
+        .collection('property')
+        .doc(houseId)
+        .delete()
+        .then(() => {
+          console.log('Property deleted!');
+        });
+      if (selectedProperty?.image) {
+        const imageRef = storage().refFromURL(selectedProperty?.image);
+        await imageRef.delete();
+      }
+      console.log('Property deleted!');
+      setSelectedProperty(null);
       setLoading(false);
+      navigation.navigate('HouseScreen');
     } catch (error) {
       console.error(error);
     }
-  };
-  const handleDelete = async () => {
-    await axios
-      .delete(
-        `https://65745078f941bda3f2af93c5.mockapi.io/architectura/Property/${houseId}`,
-      )
-      .then(() => {
-        navigation.navigate('HouseScreen');
-      })
-      .catch(error => {
-        console.error(error);
-      });
   };
   const actions = [
     {
@@ -115,27 +112,17 @@ const HouseDetail = ({route}) => {
           />
         </TouchableOpacity>
       </View>
-      <View style={styles.containerOverlay}>
-        {loading ? (
-          <View
-            style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
-            <ActivityIndicator size={'large'} color={colors.blue()} />
-          </View>
-        ) : (
+      {loading ? (
+        <View style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
+          <ActivityIndicator size={'large'} color={colors.blue()} />
+        </View>
+      ) : (
+        <View style={styles.containerOverlay}>
           <ScrollView contentContainerStyle={styles.scrollViewContent}>
             <View style={styles.category}>
               <TouchableOpacity style={styles.categoryButton}>
-                <Text
-                  style={[
-                    styles.categoryButtonText,
-                    {
-                      fontSize: getFontSizeForTitle(
-                        selectedProperty.category?.name,
-                        Dimensions.get('window').width,
-                      ),
-                    },
-                  ]}>
-                  {selectedProperty.category?.name}
+                <Text style={styles.categoryButtonText}>
+                  {selectedProperty?.category?.name}
                 </Text>
               </TouchableOpacity>
               <View style={styles.ratingContainer}>
@@ -143,22 +130,13 @@ const HouseDetail = ({route}) => {
                   source={require('../../icons/star.png')}
                   style={styles.ratingIcon}
                 />
-                <Text style={styles.ratingText}>{selectedProperty.rating}</Text>
+                <Text style={styles.ratingText}>
+                  {selectedProperty?.rating}
+                </Text>
               </View>
             </View>
             <View style={styles.containerRowPrice}>
-              <Text
-                style={[
-                  styles.houseTitle,
-                  {
-                    fontSize: getFontSizeForTitle(
-                      selectedProperty.title,
-                      Dimensions.get('window').width,
-                    ),
-                  },
-                ]}>
-                {selectedProperty.title}
-              </Text>
+              <Text style={styles.houseTitle}>{selectedProperty?.title}</Text>
               <View style={styles.priceContainer}>
                 <Image
                   source={require('../../icons/money.png')}
@@ -167,7 +145,7 @@ const HouseDetail = ({route}) => {
                 <Text
                   style={
                     styles.priceText
-                  }>{`Rp ${selectedProperty.price} ${selectedProperty.nominal}`}</Text>
+                  }>{`Rp ${selectedProperty?.price} ${selectedProperty?.nominal}`}</Text>
               </View>
             </View>
             <View style={styles.addressContainer}>
@@ -175,7 +153,9 @@ const HouseDetail = ({route}) => {
                 source={require('../../icons/location.png')}
                 style={styles.locationIcon}
               />
-              <Text style={styles.addressText}>{selectedProperty.address}</Text>
+              <Text style={styles.addressText}>
+                {selectedProperty?.address}
+              </Text>
             </View>
             <View style={styles.propertyDetails}>
               <View style={styles.LBContainer}>
@@ -186,7 +166,7 @@ const HouseDetail = ({route}) => {
                 <Text
                   style={
                     styles.detailText
-                  }>{`LB ${selectedProperty.buildingArea} m²   `}</Text>
+                  }>{`LB ${selectedProperty?.buildingArea} m²   `}</Text>
               </View>
               <View style={styles.LTContainer}>
                 <Image
@@ -196,7 +176,7 @@ const HouseDetail = ({route}) => {
                 <Text
                   style={
                     styles.detailText
-                  }>{`LT ${selectedProperty.landArea} m²`}</Text>
+                  }>{`LT ${selectedProperty?.landArea} m²`}</Text>
               </View>
             </View>
             <Text style={styles.RoomText}>Room</Text>
@@ -209,7 +189,7 @@ const HouseDetail = ({route}) => {
                 <Text
                   style={
                     styles.iconText
-                  }>{`${selectedProperty.bathrooms} Baths`}</Text>
+                  }>{`${selectedProperty?.bathrooms} Baths`}</Text>
               </View>
               <View style={styles.featureIcon}>
                 <Image
@@ -219,16 +199,16 @@ const HouseDetail = ({route}) => {
                 <Text
                   style={
                     styles.iconText
-                  }>{`${selectedProperty.bedrooms} Rooms`}</Text>
+                  }>{`${selectedProperty?.bedrooms} Rooms`}</Text>
               </View>
             </View>
             <Text style={styles.RoomText}>Description</Text>
             <Text style={styles.descriptionText}>
-              {selectedProperty.description}
+              {selectedProperty?.description}
             </Text>
           </ScrollView>
-        )}
-      </View>
+        </View>
+      )}
       <FloatingAction
         actions={actions}
         onPressItem={name => handleFabPress(name)}

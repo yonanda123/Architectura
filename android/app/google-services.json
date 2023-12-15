@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "481370712597",
+    "project_id": "architectura-d83f2",
+    "storage_bucket": "architectura-d83f2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:481370712597:android:f7afe2054c644c7b417c1c",
+        "android_client_info": {
+          "package_name": "com.architectura"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDV_dXFsxHJwfN9tf5anrgnMRh04_aCRzo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

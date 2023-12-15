@@ -12,11 +12,14 @@ import {
 import {fontType, colors} from '../../theme';
 import {useNavigation} from '@react-navigation/native';
 import {Picker} from '@react-native-picker/picker';
-import axios from 'axios';
-
+import FastImage from 'react-native-fast-image';
+import ImagePicker from 'react-native-image-crop-picker';
+import storage from '@react-native-firebase/storage';
+import firestore from '@react-native-firebase/firestore';
 const AddFormHouse = () => {
   const [choosenLabel, setChoosenLabel] = useState('Juta');
   const [loading, setLoading] = useState(false);
+  const [image, setImage] = useState(null);
   const navigation = useNavigation();
   const prizeOptions = ['Juta', 'Miliar'];
   const dataCategory = [
@@ -39,6 +42,7 @@ const AddFormHouse = () => {
     rating: 0,
     description: '',
   });
+  const roundedRating = parseFloat(propertyData.rating.toFixed(1));
   const handleChange = (key, value) => {
     setPropertyData({
       ...propertyData,
@@ -52,42 +56,54 @@ const AddFormHouse = () => {
       rating: newRating,
     });
   };
-
   const handleAddProperty = async () => {
+    let filename = image.substring(image.lastIndexOf('/') + 1);
+    const extension = filename.split('.').pop();
+    const name = filename.split('.').slice(0, -1).join('.');
+    filename = name + Date.now() + '.' + extension;
+    const reference = storage().ref(`propertyImages/${filename}`);
+
     setLoading(true);
     try {
-      await axios
-        .post(
-          'https://65745078f941bda3f2af93c5.mockapi.io/architectura/Property',
-          {
-            title: propertyData.title,
-            image,
-            price: propertyData.price,
-            category: propertyData.category,
-            address: propertyData.address,
-            buildingArea: propertyData.buildingArea,
-            landArea: propertyData.landArea,
-            bathrooms: propertyData.bathrooms,
-            bedrooms: propertyData.bedrooms,
-            description: propertyData.description,
-            rating: propertyData.rating,
-            createdAt: new Date(),
-            nominal: choosenLabel,
-          },
-        )
-        .then(function (response) {
-          console.log(response);
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
+      await reference.putFile(image);
+      const url = await reference.getDownloadURL();
+      await firestore().collection('property').add({
+        title: propertyData.title,
+        image: url,
+        price: propertyData.price,
+        category: propertyData.category,
+        address: propertyData.address,
+        buildingArea: propertyData.buildingArea,
+        landArea: propertyData.landArea,
+        bathrooms: propertyData.bathrooms,
+        bedrooms: propertyData.bedrooms,
+        description: propertyData.description,
+        rating: roundedRating,
+        createdAt: new Date(),
+        nominal: choosenLabel,
+      });
       setLoading(false);
+      console.log('Property added!');
       navigation.navigate('HouseScreen');
     } catch (e) {
       console.log(e);
     }
   };
-  const [image, setImage] = useState(null);
+
+  const handleImagePick = async () => {
+    ImagePicker.openPicker({
+      width: 1920,
+      height: 1080,
+      cropping: true,
+    })
+      .then(image => {
+        console.log(image);
+        setImage(image.path);
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  };
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -111,13 +127,6 @@ const AddFormHouse = () => {
             placeholder="Title"
             value={propertyData.title}
             onChangeText={text => handleChange('title', text)}
-          />
-          <Text style={styles.caption}>Image</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Image"
-            value={image}
-            onChangeText={text => setImage(text)}
           />
           <Text style={styles.caption}>Price</Text>
           <View style={styles.priceContainer}>
@@ -225,7 +234,9 @@ const AddFormHouse = () => {
               />
             </TouchableOpacity>
             <Text style={styles.ratingText}>
-              {propertyData.rating.toFixed(1)}
+              <Text style={styles.ratingText}>
+                {propertyData.rating.toFixed(1)}
+              </Text>
             </Text>
             <TouchableOpacity
               style={styles.ratingButton}
@@ -244,6 +255,67 @@ const AddFormHouse = () => {
             value={propertyData.description}
             onChangeText={text => handleChange('description', text)}
           />
+          <Text style={styles.caption}>Image</Text>
+          {image ? (
+            <View style={{position: 'relative'}}>
+              <FastImage
+                style={{width: '100%', height: 127, borderRadius: 5}}
+                source={{
+                  uri: image,
+                  headers: {Authorization: 'someAuthToken'},
+                  priority: FastImage.priority.high,
+                }}
+                resizeMode={FastImage.resizeMode.cover}
+              />
+              <TouchableOpacity
+                style={{
+                  position: 'absolute',
+                  top: -5,
+                  right: -5,
+                  borderRadius: 25,
+                }}
+                onPress={() => setImage(null)}>
+                <Image
+                  source={require('../../icons/plus.png')}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    transform: [{rotate: '45deg'}],
+                  }}
+                />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity onPress={handleImagePick}>
+              <View
+                style={[
+                  styles.input,
+                  {
+                    gap: 10,
+                    paddingVertical: 30,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  },
+                ]}>
+                <Image
+                  source={require('../../icons/add-image.png')}
+                  style={{
+                    marginTop: 16,
+                    width: 40,
+                    height: 40,
+                  }}
+                />
+                <Text
+                  style={{
+                    fontFamily: fontType['Pjs-Regular'],
+                    fontSize: 12,
+                    color: colors.grey(0.6),
+                  }}>
+                  Upload Thumbnail
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={styles.addButton}
             onPress={handleAddProperty}>
