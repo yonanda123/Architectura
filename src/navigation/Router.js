@@ -9,6 +9,9 @@ import {
   RoomScreen,
   AddFormHouse,
   EditFormHouse,
+  Login,
+  Register,
+  SplashScreen
 } from '../screens';
 import {Image} from 'react-native';
 import {fontType, colors} from '../theme';
@@ -107,7 +110,22 @@ function MainApp() {
 }
 const Router = () => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator initialRouteName="SplashScreen">
+      <Stack.Screen
+        name="SplashScreen"
+        component={SplashScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Register"
+        component={Register}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Login"
+        component={Login}
+        options={{headerShown: false}}
+      />
       <Stack.Screen
         name="MainApp"
         component={MainApp}

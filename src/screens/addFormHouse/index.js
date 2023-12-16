@@ -8,6 +8,7 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
+  KeyboardAvoidingView
 } from 'react-native';
 import {fontType, colors} from '../../theme';
 import {useNavigation} from '@react-navigation/native';
@@ -16,6 +17,7 @@ import FastImage from 'react-native-fast-image';
 import ImagePicker from 'react-native-image-crop-picker';
 import storage from '@react-native-firebase/storage';
 import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 const AddFormHouse = () => {
   const [choosenLabel, setChoosenLabel] = useState('Juta');
   const [loading, setLoading] = useState(false);
@@ -65,6 +67,7 @@ const AddFormHouse = () => {
 
     setLoading(true);
     try {
+      const authorId = auth().currentUser.uid;
       await reference.putFile(image);
       const url = await reference.getDownloadURL();
       await firestore().collection('property').add({
@@ -81,6 +84,7 @@ const AddFormHouse = () => {
         rating: roundedRating,
         createdAt: new Date(),
         nominal: choosenLabel,
+        authorId
       });
       setLoading(false);
       console.log('Property added!');
@@ -89,7 +93,6 @@ const AddFormHouse = () => {
       console.log(e);
     }
   };
-
   const handleImagePick = async () => {
     ImagePicker.openPicker({
       width: 1920,
@@ -105,230 +108,235 @@ const AddFormHouse = () => {
       });
   };
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}>
-          <Image
-            source={require('../../icons/left.png')}
-            style={styles.backIcon}
-          />
-        </TouchableOpacity>
-        <View style={{flex: 1, alignItems: 'center'}}>
-          <Text style={styles.headerTitle}>Add Property</Text>
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      enabled>
+      <View style={styles.container}>
+        <View style={styles.headerContainer}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}>
+            <Image
+              source={require('../../icons/left.png')}
+              style={styles.backIcon}
+            />
+          </TouchableOpacity>
+          <View style={{flex: 1, alignItems: 'center'}}>
+            <Text style={styles.headerTitle}>Add Property</Text>
+          </View>
         </View>
-      </View>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <View style={styles.formContainer}>
-          <Text style={styles.caption}>Title</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Title"
-            value={propertyData.title}
-            onChangeText={text => handleChange('title', text)}
-          />
-          <Text style={styles.caption}>Price</Text>
-          <View style={styles.priceContainer}>
-            <TextInput
-              style={styles.priceInput}
-              placeholder="Price"
-              value={propertyData.price}
-              onChangeText={text => handleChange('price', text)}
-              keyboardType="numeric"
-            />
-            <Picker
-              selectedValue={choosenLabel}
-              style={styles.prizePicker}
-              onValueChange={(itemValue, itemIndex) => {
-                setChoosenLabel(itemValue);
-              }}>
-              {prizeOptions.map((option, index) => (
-                <Picker.Item key={index} label={option} value={option} />
-              ))}
-            </Picker>
-          </View>
-          <Text style={styles.caption}>Category</Text>
-          <View style={category.container}>
-            {dataCategory.map((item, index) => {
-              const bgColor =
-                item.id === propertyData.category?.id
-                  ? colors.blue()
-                  : colors.grey(0.1);
-              const color =
-                item.id === propertyData.category?.id
-                  ? colors.white()
-                  : colors.grey();
-              return (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() =>
-                    handleChange('category', {id: item.id, name: item.name})
-                  }
-                  style={[category.item, {backgroundColor: bgColor}]}>
-                  <Text style={[category.name, {color: color}]}>
-                    {item.name}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-          <Text style={styles.caption}>Address</Text>
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Address"
-            value={propertyData.address}
-            onChangeText={text => handleChange('address', text)}
-            multiline
-          />
-          <Text style={styles.caption}>Building Area (m²)</Text>
-          <View style={styles.inputContainer}>
+        <ScrollView contentContainerStyle={styles.scrollViewContent}>
+          <View style={styles.formContainer}>
+            <Text style={styles.caption}>Title</Text>
             <TextInput
               style={styles.input}
-              placeholder="Building Area"
-              value={propertyData.buildingArea}
-              onChangeText={text => handleChange('buildingArea', text)}
-              keyboardType="numeric"
+              placeholder="Title"
+              value={propertyData.title}
+              onChangeText={text => handleChange('title', text)}
             />
-            <TouchableOpacity style={styles.button} disabled={true}>
-              <Text style={styles.buttonText}>m²</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.caption}>Land Area (m²)</Text>
-          <View style={styles.inputContainer}>
+            <Text style={styles.caption}>Price</Text>
+            <View style={styles.priceContainer}>
+              <TextInput
+                style={styles.priceInput}
+                placeholder="Price"
+                value={propertyData.price}
+                onChangeText={text => handleChange('price', text)}
+                keyboardType="numeric"
+              />
+              <Picker
+                selectedValue={choosenLabel}
+                style={styles.prizePicker}
+                onValueChange={(itemValue, itemIndex) => {
+                  setChoosenLabel(itemValue);
+                }}>
+                {prizeOptions.map((option, index) => (
+                  <Picker.Item key={index} label={option} value={option} />
+                ))}
+              </Picker>
+            </View>
+            <Text style={styles.caption}>Category</Text>
+            <View style={category.container}>
+              {dataCategory.map((item, index) => {
+                const bgColor =
+                  item.id === propertyData.category?.id
+                    ? colors.blue()
+                    : colors.grey(0.1);
+                const color =
+                  item.id === propertyData.category?.id
+                    ? colors.white()
+                    : colors.grey();
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() =>
+                      handleChange('category', {id: item.id, name: item.name})
+                    }
+                    style={[category.item, {backgroundColor: bgColor}]}>
+                    <Text style={[category.name, {color: color}]}>
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <Text style={styles.caption}>Address</Text>
+            <TextInput
+              style={[styles.input, styles.multilineInput]}
+              placeholder="Address"
+              value={propertyData.address}
+              onChangeText={text => handleChange('address', text)}
+              multiline
+            />
+            <Text style={styles.caption}>Building Area (m²)</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Building Area"
+                value={propertyData.buildingArea}
+                onChangeText={text => handleChange('buildingArea', text)}
+                keyboardType="numeric"
+              />
+              <TouchableOpacity style={styles.button} disabled={true}>
+                <Text style={styles.buttonText}>m²</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.caption}>Land Area (m²)</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Land Area"
+                value={propertyData.landArea}
+                onChangeText={text => handleChange('landArea', text)}
+                keyboardType="numeric"
+              />
+              <TouchableOpacity style={styles.button} disabled={true}>
+                <Text style={styles.buttonText}>m²</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.caption}>Bathrooms</Text>
             <TextInput
               style={styles.input}
-              placeholder="Land Area"
-              value={propertyData.landArea}
-              onChangeText={text => handleChange('landArea', text)}
+              placeholder="Bathrooms"
+              value={propertyData.bathrooms}
+              onChangeText={text => handleChange('bathrooms', text)}
               keyboardType="numeric"
             />
-            <TouchableOpacity style={styles.button} disabled={true}>
-              <Text style={styles.buttonText}>m²</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.caption}>Bathrooms</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Bathrooms"
-            value={propertyData.bathrooms}
-            onChangeText={text => handleChange('bathrooms', text)}
-            keyboardType="numeric"
-          />
-          <Text style={styles.caption}>Bedrooms</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Bedrooms"
-            value={propertyData.bedrooms}
-            onChangeText={text => handleChange('bedrooms', text)}
-            keyboardType="numeric"
-          />
-          <Text style={styles.caption}>Rating</Text>
-          <View style={styles.ratingContainer}>
-            <TouchableOpacity
-              style={styles.ratingButton}
-              onPress={() => handleRatingChange(-0.1)}>
-              <Image
-                source={require('../../icons/minus.png')}
-                style={styles.ratingImage}
-              />
-            </TouchableOpacity>
-            <Text style={styles.ratingText}>
-              <Text style={styles.ratingText}>
-                {propertyData.rating.toFixed(1)}
-              </Text>
-            </Text>
-            <TouchableOpacity
-              style={styles.ratingButton}
-              onPress={() => handleRatingChange(0.1)}>
-              <Image
-                source={require('../../icons/add.png')}
-                style={styles.ratingImage}
-              />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.caption}>Description</Text>
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Description"
-            multiline
-            value={propertyData.description}
-            onChangeText={text => handleChange('description', text)}
-          />
-          <Text style={styles.caption}>Image</Text>
-          {image ? (
-            <View style={{position: 'relative'}}>
-              <FastImage
-                style={{width: '100%', height: 127, borderRadius: 5}}
-                source={{
-                  uri: image,
-                  headers: {Authorization: 'someAuthToken'},
-                  priority: FastImage.priority.high,
-                }}
-                resizeMode={FastImage.resizeMode.cover}
-              />
+            <Text style={styles.caption}>Bedrooms</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Bedrooms"
+              value={propertyData.bedrooms}
+              onChangeText={text => handleChange('bedrooms', text)}
+              keyboardType="numeric"
+            />
+            <Text style={styles.caption}>Rating</Text>
+            <View style={styles.ratingContainer}>
               <TouchableOpacity
-                style={{
-                  position: 'absolute',
-                  top: -5,
-                  right: -5,
-                  borderRadius: 25,
-                }}
-                onPress={() => setImage(null)}>
+                style={styles.ratingButton}
+                onPress={() => handleRatingChange(-0.1)}>
                 <Image
-                  source={require('../../icons/plus.png')}
-                  style={{
-                    width: 24,
-                    height: 24,
-                    transform: [{rotate: '45deg'}],
-                  }}
+                  source={require('../../icons/minus.png')}
+                  style={styles.ratingImage}
+                />
+              </TouchableOpacity>
+              <Text style={styles.ratingText}>
+                <Text style={styles.ratingText}>
+                  {propertyData.rating.toFixed(1)}
+                </Text>
+              </Text>
+              <TouchableOpacity
+                style={styles.ratingButton}
+                onPress={() => handleRatingChange(0.1)}>
+                <Image
+                  source={require('../../icons/add.png')}
+                  style={styles.ratingImage}
                 />
               </TouchableOpacity>
             </View>
-          ) : (
-            <TouchableOpacity onPress={handleImagePick}>
-              <View
-                style={[
-                  styles.input,
-                  {
-                    gap: 10,
-                    paddingVertical: 30,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  },
-                ]}>
-                <Image
-                  source={require('../../icons/add-image.png')}
-                  style={{
-                    marginTop: 16,
-                    width: 40,
-                    height: 40,
+            <Text style={styles.caption}>Description</Text>
+            <TextInput
+              style={[styles.input, styles.multilineInput]}
+              placeholder="Description"
+              multiline
+              value={propertyData.description}
+              onChangeText={text => handleChange('description', text)}
+            />
+            <Text style={styles.caption}>Image</Text>
+            {image ? (
+              <View style={{position: 'relative'}}>
+                <FastImage
+                  style={{width: '100%', height: 127, borderRadius: 5}}
+                  source={{
+                    uri: image,
+                    headers: {Authorization: 'someAuthToken'},
+                    priority: FastImage.priority.high,
                   }}
+                  resizeMode={FastImage.resizeMode.cover}
                 />
-                <Text
+                <TouchableOpacity
                   style={{
-                    fontFamily: fontType['Pjs-Regular'],
-                    fontSize: 12,
-                    color: colors.grey(0.6),
-                  }}>
-                  Upload Thumbnail
-                </Text>
+                    position: 'absolute',
+                    top: -5,
+                    right: -5,
+                    borderRadius: 25,
+                  }}
+                  onPress={() => setImage(null)}>
+                  <Image
+                    source={require('../../icons/plus.png')}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      transform: [{rotate: '45deg'}],
+                    }}
+                  />
+                </TouchableOpacity>
               </View>
+            ) : (
+              <TouchableOpacity onPress={handleImagePick}>
+                <View
+                  style={[
+                    styles.input,
+                    {
+                      gap: 10,
+                      paddingVertical: 30,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    },
+                  ]}>
+                  <Image
+                    source={require('../../icons/add-image.png')}
+                    style={{
+                      marginTop: 16,
+                      width: 40,
+                      height: 40,
+                    }}
+                  />
+                  <Text
+                    style={{
+                      fontFamily: fontType['Pjs-Regular'],
+                      fontSize: 12,
+                      color: colors.grey(0.6),
+                    }}>
+                    Upload Thumbnail
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={handleAddProperty}>
+              <Text style={styles.buttonText}>Add Property</Text>
             </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={handleAddProperty}>
-            <Text style={styles.buttonText}>Add Property</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-      {loading && (
-        <View style={category.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.blue()} />
-        </View>
-      )}
-    </View>
+          </View>
+        </ScrollView>
+        {loading && (
+          <View style={category.loadingOverlay}>
+            <ActivityIndicator size="large" color={colors.blue()} />
+          </View>
+        )}
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 export default AddFormHouse;

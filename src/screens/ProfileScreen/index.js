@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,48 @@ import {
   ScrollView,
 } from 'react-native';
 import {fontType, colors} from '../../theme';
+import {useNavigation} from '@react-navigation/native';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import FastImage from 'react-native-fast-image';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const ProfileScreen = () => {
+  const navigation = useNavigation();
+  const [profileData, setProfileData] = useState(null);
+  useEffect(() => {
+    const fetchProfileData = () => {
+      try {
+        const user = auth().currentUser;
+        if (user) {
+          const userId = user.uid;
+          const userRef = firestore().collection('users').doc(userId);
+          const unsubscribeProfile = userRef.onSnapshot(doc => {
+            if (doc.exists) {
+              const userData = doc.data();
+              setProfileData(userData);
+            } else {
+              console.error('User document not found.');
+            }
+          });
+          return () => {
+            unsubscribeProfile();
+          };
+        }
+      } catch (error) {
+        console.error('Error fetching profile data:', error);
+      }
+    };
+    fetchProfileData();
+  }, []);
+  const handleLogout = async () => {
+    try {
+      await auth().signOut();
+      await AsyncStorage.removeItem('userData');
+      navigation.replace('Login');
+    } catch (error) {
+      console.error(error);
+    }
+  };
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -16,9 +57,14 @@ const ProfileScreen = () => {
       </View>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.profileImageContainer}>
-          <Image
-            source={require('../../images/profile.jpg')}
+          <FastImage
             style={styles.profileImage}
+            source={{
+              uri: profileData?.photoUrl,
+              headers: {Authorization: 'someAuthToken'},
+              priority: FastImage.priority.high,
+            }}
+            resizeMode={FastImage.resizeMode.cover}
           />
           <TouchableOpacity style={styles.editButton}>
             <Image
@@ -28,8 +74,8 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
         <View style={styles.userInfo}>
-          <Text style={styles.userName}>John Doe</Text>
-          <Text style={styles.userEmail}>john.doe@example.com</Text>
+          <Text style={styles.userName}>{profileData?.fullName}</Text>
+          <Text style={styles.userEmail}>{profileData?.email}</Text>
           <TouchableOpacity style={styles.editProfileButton}>
             <Text style={styles.editProfileButtonText}>Edit Profile</Text>
           </TouchableOpacity>
@@ -80,7 +126,7 @@ const ProfileScreen = () => {
               style={styles.customArrowIcon}
             />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
             <Image
               source={require('../../icons/logout.png')}
               style={styles.menuIcon}
@@ -204,5 +250,3 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
 });
-
-

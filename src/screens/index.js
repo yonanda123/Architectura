@@ -5,4 +5,7 @@ import RoomScreen from "./RoomScreen";
 import ProfileScreen from "./ProfileScreen";
 import AddFormHouse from "./addFormHouse";
 import EditFormHouse from "./editFormHouse";
-export {HomeScreen, HouseScreen, FurnitureScreen, RoomScreen, ProfileScreen,AddFormHouse,EditFormHouse}
+import Login from "./Login";
+import Register from "./Register";
+import SplashScreen from "./SplashScreen";
+export {HomeScreen, HouseScreen, FurnitureScreen, RoomScreen, ProfileScreen,AddFormHouse,EditFormHouse, Login, Register, SplashScreen}
